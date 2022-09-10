@@ -1,16 +1,36 @@
-import { useAddress, useContract } from "@thirdweb-dev/react";
+import { useAddress, useContract, useContractData } from "@thirdweb-dev/react";
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
 import Header from "../components/Header";
 import Loading from "../components/Loading";
 import Login from "../components/Login";
+import { ethers } from "ethers";
+import { currency } from "../const";
 
 const Home: NextPage = () => {
   const address = useAddress();
   const [quantity, setQuantity] = useState<number>(1);
+
   const { contract, isLoading } = useContract(
     process.env.LOTTERY_CONTRACT_ADDRESS
+  );
+  console.log(contract);
+
+  const { data: expiration } = useContractData(contract, "expiration");
+  const { data: remainingTickets } = useContractData(
+    contract,
+    "RemainingTickets"
+  );
+  const { data: currentWinningReward } = useContractData(
+    contract,
+    "CurrentWinningReward"
+  );
+  const { data: ticketPrice } = useContractData(contract, "ticketPrice");
+
+  const { data: ticketCommission } = useContractData(
+    contract,
+    "ticketCommission"
   );
 
   // if (isLoading) return <Loading />;
@@ -34,11 +54,15 @@ const Home: NextPage = () => {
             <div className="flex justify-between p-2 space-x-2">
               <div className="stats">
                 <h2 className="text-sm">Total Pool</h2>
-                <p className="text-xl">0.1 MATIC</p>
+                <p className="text-xl">
+                  {currentWinningReward &&
+                    ethers.utils.formatEther(currentWinningReward.toString())}
+                  {currency}
+                </p>
               </div>
               <div className="stats">
                 <h2 className="text-sm">Tickets Remaining</h2>
-                <p className="text-xl">100</p>
+                <p className="text-xl">{remainingTickets?.toNumber()}</p>
               </div>
             </div>
             {/* counter */}
@@ -48,7 +72,11 @@ const Home: NextPage = () => {
             <div className="stats-container">
               <div className="flex justify-between items-center text-white pb-2">
                 <h2>Price per ticket</h2>
-                <p>0.01 MATIC</p>
+                <p>
+                  {ticketPrice &&
+                    ethers.utils.formatEther(ticketPrice.toString())}
+                  {currency}
+                </p>
               </div>
               <div className="flex text-white items-center space-x-2 bg-[#091B18] border-[#004337] border p-4">
                 <p>TICKETS</p>
@@ -64,18 +92,33 @@ const Home: NextPage = () => {
               <div className="space-y-2 mt-5">
                 <div className="flex items-center justify-between text-emerald-300 text-sm italic font-extrabold">
                   <p>Total cost of tickets</p>
-                  <p>0.999</p>
+                  <p>
+                    {ticketPrice &&
+                      Number(ethers.utils.formatEther(ticketPrice.toString())) *
+                        quantity}
+                    {currency}
+                  </p>
                 </div>
                 <div className="flex items-center justify-between text-emerald-300 text-xs italic">
                   <p>Service fees</p>
-                  <p>0.001 MATIC</p>
+                  <p>
+                    {ticketCommission &&
+                      ethers.utils.formatEther(ticketCommission.toString())}
+                    {currency}
+                  </p>
                 </div>
                 <div className="flex items-center justify-between text-emerald-300 text-xs italic">
                   <p>+ Network Fees</p>
                   <p>TBC</p>
                 </div>
               </div>
-              <button className="mt-5 w-full bg-gradient-to-br from-orange-500 to-emerald-600 px-10 py-5 rounded-md text-white shadow-xl disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed disabled:text-gray-100">
+              <button
+                disabled={
+                  expiration?.toString() < Date.now().toString() ||
+                  remainingTickets?.toNumber() === 0
+                }
+                className="mt-5 w-full bg-gradient-to-br from-orange-500 to-emerald-600 px-10 py-5 rounded-md text-white shadow-xl disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed disabled:text-gray-100"
+              >
                 Buy Tickets
               </button>
             </div>
