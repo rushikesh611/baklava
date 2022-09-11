@@ -10,6 +10,7 @@ type CountdownTimerProps = {
 
 const CountdownTimer = () => {
   const { contract } = useContract(process.env.LOTTERY_CONTRACT_ADDRESS);
+
   const { data: expiration, isLoading: isLoadingExpiration } = useContractData(
     contract,
     "expiration"

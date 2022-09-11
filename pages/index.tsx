@@ -1,4 +1,9 @@
-import { useAddress, useContract, useContractData } from "@thirdweb-dev/react";
+import {
+  useAddress,
+  useContract,
+  useContractCall,
+  useContractData,
+} from "@thirdweb-dev/react";
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
@@ -8,6 +13,7 @@ import Login from "../components/Login";
 import { ethers } from "ethers";
 import { currency } from "../const";
 import CountdownTimer from "../components/CountdownTimer";
+import toast from "react-hot-toast";
 
 const Home: NextPage = () => {
   const address = useAddress();
@@ -34,6 +40,29 @@ const Home: NextPage = () => {
     contract,
     "ticketCommission"
   );
+
+  const { mutateAsync: BuyTickets } = useContractCall(contract, "BuyTickets");
+
+  const handleClick = async () => {
+    if (!ticketPrice) return;
+    const notification = toast.loading("Buying tickets...");
+
+    try {
+      const data = await BuyTickets([
+        {
+          value: ethers.utils.parseEther(
+            (
+              Number(ethers.utils.formatEther(ticketPrice)) * quantity
+            ).toString()
+          ),
+        },
+      ]);
+      toast.success("Tickets purchased successfully!", { id: notification });
+      console.info("contract call success", data);
+    } catch (error) {
+      toast.error("Whoops something went wrong!", { id: notification });
+    }
+  };
 
   // if (isLoading) return <Loading />;
 
@@ -117,6 +146,7 @@ const Home: NextPage = () => {
                 </div>
               </div>
               <button
+                onClick={handleClick}
                 disabled={
                   expiration?.toString() < Date.now().toString() ||
                   remainingTickets?.toNumber() === 0
