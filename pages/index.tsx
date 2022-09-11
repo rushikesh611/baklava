@@ -7,6 +7,7 @@ import Loading from "../components/Loading";
 import Login from "../components/Login";
 import { ethers } from "ethers";
 import { currency } from "../const";
+import CountdownTimer from "../components/CountdownTimer";
 
 const Home: NextPage = () => {
   const address = useAddress();
@@ -15,6 +16,7 @@ const Home: NextPage = () => {
   const { contract, isLoading } = useContract(
     process.env.LOTTERY_CONTRACT_ADDRESS
   );
+
   console.log(contract);
 
   const { data: expiration } = useContractData(contract, "expiration");
@@ -65,7 +67,9 @@ const Home: NextPage = () => {
                 <p className="text-xl">{remainingTickets?.toNumber()}</p>
               </div>
             </div>
-            {/* counter */}
+            <div className="mt-5 mb-3">
+              <CountdownTimer />
+            </div>
           </div>
 
           <div className="stats-container space-y-2">
