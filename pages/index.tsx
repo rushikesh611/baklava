@@ -14,6 +14,7 @@ import { ethers } from "ethers";
 import { currency } from "../const";
 import CountdownTimer from "../components/CountdownTimer";
 import toast from "react-hot-toast";
+import Marquee from "react-fast-marquee";
 
 const Home: NextPage = () => {
   const address = useAddress();
@@ -43,7 +44,22 @@ const Home: NextPage = () => {
   );
 
   const { mutateAsync: BuyTickets } = useContractCall(contract, "BuyTickets");
+  const { mutateAsync: WithdrawWinnings } = useContractCall(
+    contract,
+    "WithdrawWinnings"
+  );
   const { data: tickets } = useContractData(contract, "getTickets");
+  const { data: winnings } = useContractData(
+    contract,
+    "getWinningsForAddress",
+    address
+  );
+
+  const { data: lastWinner } = useContractData(contract, "lastWinner");
+  const { data: lastWinnerAmount } = useContractData(
+    contract,
+    "lastWinnerAmount"
+  );
 
   useEffect(() => {
     if (!tickets) return;
@@ -76,6 +92,17 @@ const Home: NextPage = () => {
     }
   };
 
+  const onWithdrawWinnings = async () => {
+    const notification = toast.loading("Withdrawing winnings...");
+    try {
+      const data = await WithdrawWinnings([{}]);
+      toast.success("Winnings withdrawn successfully!", { id: notification });
+    } catch (err) {
+      toast.error("Whoops something went wrong!", { id: notification });
+      console.error("contract call failure", err);
+    }
+  };
+
   // if (isLoading) return <Loading />;
 
   if (!address) return <Login />;
@@ -88,6 +115,37 @@ const Home: NextPage = () => {
 
       <div className="flex-1">
         <Header />
+        <Marquee className="bg-[#0A1F1C] p-5 mb-5" gradient={false} speed={100}>
+          <div className="flex space-x-2 mx-10">
+            <h4 className="text-white font-bold">
+              Last Winner: {lastWinner?.toString()}
+            </h4>
+            <h4 className="text-white font-bold">
+              Previous Winnings:{" "}
+              {lastWinnerAmount &&
+                ethers.utils.formatEther(lastWinnerAmount?.toString())}{" "}
+              {currency}
+            </h4>
+          </div>
+        </Marquee>
+
+        {winnings > 0 && (
+          <div className="max-w-md md:max-w-2xl lg:max-w-4xl mx-auto mt-5">
+            <button
+              onClick={onWithdrawWinnings}
+              className="p-5 bg-gradient-to-b from-orange-500 to-emerald-600 animate-pulse text-center rounded-xl w-full"
+            >
+              <p className="font-bold">Winner Winner Chicken Dinner!</p>
+              <p className="">
+                Total Winnings: {ethers.utils.formatEther(winnings.toString())}{" "}
+                {currency}
+              </p>
+              <br />
+              <p className="font-semibold">Click here to withdraw</p>
+            </button>
+          </div>
+        )}
+
         <div className="space-y-5 md:space-y-0 m-5 md:flex md:flex-row items-start justify-center md:space-x-5 ">
           <div className="stats-container">
             <h1 className="text-5xl text-white font-semibold text-center">
