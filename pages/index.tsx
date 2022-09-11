@@ -4,17 +4,18 @@ import {
   useContractCall,
   useContractData,
 } from "@thirdweb-dev/react";
+import { ethers } from "ethers";
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useState } from "react";
+import Marquee from "react-fast-marquee";
+import toast from "react-hot-toast";
+import AdminControls from "../components/AdminControls";
+import CountdownTimer from "../components/CountdownTimer";
 import Header from "../components/Header";
 import Loading from "../components/Loading";
 import Login from "../components/Login";
-import { ethers } from "ethers";
 import { currency } from "../const";
-import CountdownTimer from "../components/CountdownTimer";
-import toast from "react-hot-toast";
-import Marquee from "react-fast-marquee";
 
 const Home: NextPage = () => {
   const address = useAddress();
@@ -55,6 +56,10 @@ const Home: NextPage = () => {
     address
   );
 
+  const { data: isLotteryOperator } = useContractData(
+    contract,
+    "lotteryOperator"
+  );
   const { data: lastWinner } = useContractData(contract, "lastWinner");
   const { data: lastWinnerAmount } = useContractData(
     contract,
@@ -103,7 +108,7 @@ const Home: NextPage = () => {
     }
   };
 
-  // if (isLoading) return <Loading />;
+  if (isLoading) return <Loading />;
 
   if (!address) return <Login />;
 
@@ -128,6 +133,12 @@ const Home: NextPage = () => {
             </h4>
           </div>
         </Marquee>
+
+        {isLotteryOperator === address && (
+          <div className="flex justify-center">
+            <AdminControls />
+          </div>
+        )}
 
         {winnings > 0 && (
           <div className="max-w-md md:max-w-2xl lg:max-w-4xl mx-auto mt-5">
@@ -157,7 +168,9 @@ const Home: NextPage = () => {
                 <h2 className="text-sm">Total Pool</h2>
                 <p className="text-xl">
                   {currentWinningReward &&
-                    ethers.utils.formatEther(currentWinningReward.toString())}
+                    ethers.utils.formatEther(
+                      currentWinningReward.toString()
+                    )}{" "}
                   {currency}
                 </p>
               </div>
@@ -177,7 +190,7 @@ const Home: NextPage = () => {
                 <h2>Price per ticket</h2>
                 <p>
                   {ticketPrice &&
-                    ethers.utils.formatEther(ticketPrice.toString())}
+                    ethers.utils.formatEther(ticketPrice.toString())}{" "}
                   {currency}
                 </p>
               </div>
@@ -198,7 +211,7 @@ const Home: NextPage = () => {
                   <p>
                     {ticketPrice &&
                       Number(ethers.utils.formatEther(ticketPrice.toString())) *
-                        quantity}
+                        quantity}{" "}
                     {currency}
                   </p>
                 </div>
@@ -206,7 +219,9 @@ const Home: NextPage = () => {
                   <p>Service fees</p>
                   <p>
                     {ticketCommission &&
-                      ethers.utils.formatEther(ticketCommission.toString())}
+                      ethers.utils.formatEther(
+                        ticketCommission.toString()
+                      )}{" "}
                     {currency}
                   </p>
                 </div>
